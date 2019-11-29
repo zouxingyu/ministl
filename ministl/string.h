@@ -4,33 +4,39 @@
 #include<cstring>
 #include<utility>
 #include<stdexcept>
+
 class String {
 public:
 	//constructor
-	explicit String(){
-		*beg = '\0';
-		ed = cap = beg;
+	explicit String() :p(new char[initialcap + 1]), thesize(0), thecapacity(initialcap) {
+		*p = '\0';
 	}
-	String(size_t count, char ch) :beg(new char[count + 1]{0}), ed(beg + count), cap(ed) {
-		memset(beg, count, ch);
+	String(size_t count, char ch) :p(new char[get_next_cap(count) + 1]), thesize(count), thecapacity(get_next_cap(count)) {
+		memset(p, ch, count);
+		p[count] = '\0';
 	}
-	String(const char* s):beg(new char[strlen(s)+1]),ed(beg + strlen(s)), cap(ed) {
-		strcpy(beg, s);
+	String(const char* s) :p(new char[get_next_cap(strlen(s)) + 1]), thesize(strlen(s)), thecapacity(get_next_cap(strlen(s))) {
+		strcpy(p, s);
 	}
-	String(const String& other, size_t pos, size_t count) :beg(new char[count + 1]{ 0 }), ed(beg + count), cap(ed) {
-		char* tmp = other.beg + pos;
-		memcpy(beg, tmp, count);
+	String(const String& other, size_t pos, size_t count):p(new char[get_next_cap(count) + 1]), thesize(count), thecapacity(get_next_cap(count)) {
+		memcpy(p, other.p + pos, count);
+		p[count] = '\0';
 	}
-	String(const String& other):beg(new char[strlen(other.beg)+1]),ed(beg + other.size()),cap(ed) {
-		strcpy(beg, other.beg);
+	String(const char* s, size_t count) :p(new char[get_next_cap(count) + 1]), thesize(count), thecapacity(get_next_cap(count)) {
+		memcpy(p, s, count);
+		p[count] = '\0';
 	}
-	String(String&& other):beg(other.beg), ed(other.ed), cap(other.ed) {
-		other.beg = nullptr;
+	String(const String& other) :p(new char[other.thecapacity + 1]), thesize(other.size()), thecapacity(other.thecapacity) {
+		strcpy(p, other.p);
+	}
+	String(String&& other) :p(other.p), thesize(other.thesize), thecapacity(other.thecapacity) {
+		other.p = nullptr;
+		thesize = thecapacity = 0;
 	}
 	//dextructor
 	~String()
 	{
-		delete []beg;
+		delete[]p;
 	}
 	//operator=
 	String& operator=(const String& rhs) {
@@ -41,107 +47,167 @@ public:
 		swap(rhs);
 	}
 	//element access
-	char& at(size_t pos) {
-		if (pos<0 || pos>size())
+	char& at(size_t idx) {
+		if (idx<0 || idx>size())
 			throw std::out_of_range("out of range");
-		return beg[pos];
+		return p[idx];
 	}
-	const char& at(size_t pos)const {
-		if (pos<0 || pos>size())
+	const char& at(size_t idx)const {
+		if (idx<0 || idx>size())
 			throw std::out_of_range("out of range");
-		return beg[pos];
+		return p[idx];
 	}
-	char& operator[](size_t pos) {
-		return beg[pos];
+	char& operator[](size_t idx) {
+		return p[idx];
 	}
-	const char& operator[](size_t pos)const {
-		return beg[pos];
+	const char& operator[](size_t idx)const {
+		return p[idx];
 	}
 	char& front() {
-		return *beg;
+		return p[0];
 	}
 	const char& front()const {
-		return *beg;
+		return p[0];
 	}
 	char& back() {
-		return *(ed-1);
+		return p[thesize - 1];
 	}
 	const char& back()const {
-		return *(ed-1);
+		return p[thesize - 1];
 	}
 	const char* data() const noexcept {
-		return beg;
+		return p;
 	}
 	const char* c_str()const noexcept {
-		return beg;
+		return p;
 	}
 	//iterators
 	iterator begin()noexcept {
-		return beg;
+		return p;
 	}
 	const_iterator begin() const noexcept {
-		return beg;
+		return p;
 	}
 	iterator end()noexcept {
-		return ed;
+		return p + thesize;
 	}
 	const_iterator end() const noexcept {
-		return ed;
+		return p + thesize;
 	}
 	//capacity
 	bool empty()const noexcept {
-		return beg==ed;
+		return thesize == thecapacity;
 	}
 	size_t size()const noexcept {
-		return ed-beg;
+		return thesize;
 	}
 	size_t length()const noexcept {
 		return  size();
 	}
-	size_t max_size()const noexcept {
+/*	size_t max_size()const noexcept {
 
 	}
+*/
 	size_t capacity()const noexcept {
-		return cap - beg;
+		return thecapacity;
 	}
 	size_t reserve(size_t newcap) {
-		if (newcap > capacity()) {
-			realloc_n(newcap);
-		}
+		size_t newcap = get_next_cap(newcap);
+		realloc_n(newcap);
 	}
 	//operations
 	void clear()noexcept {
-		ed = beg;
+		thesize = 0;
 	}
 	String& insert(size_t index, size_t count, char ch) {
-		
+		char* s = new char[count];
+		memset(s, ch, count);
+		inserthelper(index, s, count);
+		return *this;
+	}
+	String& insert(size_t index, const char* s) {
+		inserthelper(index, s, strlen(s));
+		return *this;
+	}
+	String& insert(size_t index, const String& str) {
+		inserthelper(index, str.p, str.size());
+		return *this;
+	}
+	String& insert(size_t index, const char* s, size_t count) {
+		inserthelper(index, s, count);
+		return *this;
+	}
+	iterator insert(const_iterator pos, char ch) {
+		size_t index = pos.ptr - p;
+		insert(index, 1, ch);
+		return p + index;
+	}
+	String& append(size_t count, char ch) {
+		return insert(thesize, count, ch);
+	}
+	String& append(const String& str) {
+		return insert(thesize, str);
+	}
+	String& append(const char* s) {
+		return insert(thesize, s);
+	}
+	String& append(const char* s, size_t count) {
+		return insert(thesize, s, count);
+	}
+	String& operator+=(const String& str) {
+		return append(str);
+	}
+	String& operator+=(char ch) {
+		return append(1, ch);
+	}
+	String& operator+=(const char* s) {
+		return append(s);
 	}
 	void push_back(char ch) {
-		if (size() == capacity()) {
-			int newsize = size() ? size() * 2 : 1;
-			realloc_n(newsize);
+		if (thesize == thecapacity) {
+			realloc_n(thecapacity * 2);
 		}
-		*ed++ = ch;
+		p[thesize++] = ch;
+		p[thesize] = '\0';
 	}
 
 	void swap(String& other) {
-		std::swap(beg, other.beg);
-		std::swap(ed, other.ed);
-		std::swap(cap, other.cap);
+		std::swap(p, other.p);
+		std::swap(thesize, other.thesize);
+		std::swap(thecapacity, other.thecapacity);
 	}
-
+	int compare(const String& str)const noexcept {
+		return strcmp(p, str.p);
+	}
+	
 private:
-	char* beg, *ed,*cap;
-	void realloc_n(size_t newsize) {
-		char* newbeg = new char[newsize];
-		size_t oldsize = size();
-		memcpy(newbeg, beg, sizeof(char) *oldsize);
-		delete[]beg;
-		beg = newbeg;
-		ed = beg + oldsize;
-		cap = beg + newsize;
+	static constexpr size_t initialcap = 15;
+	char* p;
+	size_t thesize, thecapacity;
+	void realloc_n(size_t newcap) {
+		char* newp = new char[newcap+1];
+		memcpy(newp, p, thesize);
+		delete[]p;
+		p = newp;
+		thecapacity = newcap;
 	}
-
+	size_t get_next_cap(size_t k) {
+		size_t newcap = initialcap;
+		while (newcap < k) {
+			newcap *= 2;
+		}
+		return newcap;
+	}
+	void inserthelper(size_t index, const char* s, size_t sz) {
+		int newcap = get_next_cap(thesize + sz + 1);
+		char* newp = new char[newcap + 1];
+		memcpy(newp, p, index);
+		memcpy(newp + index, s, sz);
+		memcpy(newp + index + sz, p + index, thesize - index);
+		p[thesize + sz] = '\0';
+		thesize += sz;
+		thecapacity = newcap;
+	}
 	struct const_iterator {
 		friend class String;
 	public:
