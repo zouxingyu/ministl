@@ -4,9 +4,87 @@
 #include<cstring>
 #include<utility>
 #include<stdexcept>
+#include<iostream>
 
 class String {
+	friend String operator+(const String& lhs, const String& rhs) {
+		String s;
+		return s.append(lhs).append(rhs);
+	}
+	friend bool operator==(const String& lhs, const String& rhs) {
+		return strcmp(lhs.p, rhs.p) == 0;
+	}
+	friend std::ostream& operator<<(std::ostream& os, const String& str) {
+		os << str.p;
+		return os;
+	}
 public:
+	//iterator
+	struct const_iterator {
+		friend class String;
+	public:
+		const char& operator*()const {
+			return *ptr;
+		}
+		const_iterator& operator++() {
+			++ptr;
+			return *this;
+		}
+		const_iterator operator++(int) {
+			const_iterator old(ptr);
+			++(*this);
+			return old;
+		}
+		const_iterator& operator--() {
+			--ptr;
+			return *this;
+		}
+		const_iterator operator--(int) {
+			const_iterator old(ptr);
+			--(*this);
+			return old;
+		}
+		bool operator==(const const_iterator& rhs)const {
+			return ptr == rhs.ptr;
+		}
+		bool operator!=(const const_iterator& rhs)const {
+			return !(*this == rhs);
+		}
+	protected:
+		char* ptr;
+		const_iterator(char* p) :ptr(p) {}
+	};
+
+	struct iterator :public const_iterator {
+		friend class String;
+	public:
+		char& operator*() {
+			return *ptr;
+		}
+		const char& operator*()const {
+			return *ptr;
+		}
+		const_iterator& operator++() {
+			++ptr;
+			return *this;
+		}
+		const_iterator operator++(int) {
+			const_iterator old(ptr);
+			++(*this);
+			return old;
+		}
+		const_iterator& operator--() {
+			--ptr;
+			return *this;
+		}
+		const_iterator operator--(int) {
+			const_iterator old(ptr);
+			--(*this);
+			return old;
+		}
+	private:
+		iterator(char* p) :const_iterator(p) {}
+	};
 	//constructor
 	explicit String() :p(new char[initialcap + 1]), thesize(0), thecapacity(initialcap) {
 		*p = '\0';
@@ -33,7 +111,15 @@ public:
 		other.p = nullptr;
 		thesize = thecapacity = 0;
 	}
-	//dextructor
+	template<class Input>
+	String(Input first, Input last):p(new char[(last-first)+1]),thesize(last-first+1),thecapacity(get_next_cap(last - first + 1)) {
+		size_t pos = 0;
+		for (Input it = first; it != last; ++it) {
+			p[pos++] = *it;
+		}
+		p[pos] = '\0';
+	}
+	//destructor
 	~String()
 	{
 		delete[]p;
@@ -112,7 +198,7 @@ public:
 		return thecapacity;
 	}
 	size_t reserve(size_t newcap) {
-		size_t newcap = get_next_cap(newcap);
+		newcap = get_next_cap(newcap);
 		realloc_n(newcap);
 	}
 	//operations
@@ -180,6 +266,22 @@ public:
 		return strcmp(p, str.p);
 	}
 	
+	String& replace(size_t pos, size_t count, const String& str) {
+		replacehelper(pos, str.p, str.size(), count);
+		return *this;
+	}
+	String substr(size_t pos = 0, size_t count = npos)const {
+		size_t newsize = (count == npos) ? thesize : count;
+		return String(p + pos, p + pos + count);
+	}
+	//search
+	size_t find(const String& str, size_t pos = 0)const noexcept {
+		const char* c = strstr(p + pos, str.p);
+		return (c == nullptr) ? npos : c - p;
+	}
+
+	static constexpr int npos = -1;
+
 private:
 	static constexpr size_t initialcap = 15;
 	char* p;
@@ -199,7 +301,7 @@ private:
 		return newcap;
 	}
 	void inserthelper(size_t index, const char* s, size_t sz) {
-		int newcap = get_next_cap(thesize + sz + 1);
+		int newcap = get_next_cap(thesize + sz);
 		char* newp = new char[newcap + 1];
 		memcpy(newp, p, index);
 		memcpy(newp + index, s, sz);
@@ -208,71 +310,17 @@ private:
 		thesize += sz;
 		thecapacity = newcap;
 	}
-	struct const_iterator {
-		friend class String;
-	public:
-		const char& operator*()const {
-			return *ptr;
-		}
-		const_iterator& operator++() {
-			++ptr;
-			return *this;
-		}
-		const_iterator operator++(int) {
-			const_iterator old(ptr);
-			++(*this);
-			return old;
-		}
-		const_iterator& operator--() {
-			--ptr;
-			return *this;
-		}
-		const_iterator operator--(int) {
-			const_iterator old(ptr);
-			--(*this);
-			return old;
-		}
-		bool operator==(const const_iterator& rhs)const{
-			return ptr == rhs.ptr;
-		}
-		bool operator!=(const const_iterator& rhs)const {
-			return !(*this == rhs);
-		}
-	protected:
-		char* ptr;
-		const_iterator(char* p) :ptr(p) {}
-	};
-
-	struct iterator:public const_iterator {
-		friend class String;
-	public:
-		char& operator*() {
-			return *ptr;
-		}
-		const char& operator*()const {
-			return *ptr;
-		}
-		const_iterator& operator++() {
-			++ptr;
-			return *this;
-		}
-		const_iterator operator++(int) {
-			const_iterator old(ptr);
-			++(*this);
-			return old;
-		}
-		const_iterator& operator--() {
-			--ptr;
-			return *this;
-		}
-		const_iterator operator--(int) {
-			const_iterator old(ptr);
-			--(*this);
-			return old;
-		}
-	private:
-		iterator(char *p):const_iterator(p){}
-	};
-
+	void replacehelper(size_t index, const char* s, size_t sz, size_t count) {
+		size_t newsize = thesize + sz - count;
+		int newcap = get_next_cap(newsize);
+		char* newp = new char[newcap + 1];
+		memcpy(newp, p, index);
+		memcpy(newp + index, s, sz);
+		memcpy(newp + index + sz, p + index+count, thesize - index-count);
+		p[newsize] = '\0';
+		thesize = newsize;
+		thecapacity = newcap;
+	}
+	
 };
 #endif // !STRING_H
