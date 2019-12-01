@@ -124,9 +124,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="pair.h" />
+    <ClInclude Include="deque.h" />
+    <ClInclude Include="list.h" />
+    <ClInclude Include="priority_queue.h" />
+    <ClInclude Include="queue.h" />
     <ClInclude Include="set.h" />
+    <ClInclude Include="stack.h" />
     <ClInclude Include="string.h" />
+    <ClInclude Include="vector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

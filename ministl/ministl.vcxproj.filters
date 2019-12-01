@@ -21,7 +21,22 @@
     <ClInclude Include="set.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="pair.h">
+    <ClInclude Include="vector.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="list.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="queue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="priority_queue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="deque.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
