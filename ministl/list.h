@@ -14,18 +14,36 @@ private:
 	};
 	Node* head;
 	Node* tail;
+	size_t thesize;
 
 public:
-	List() :head(new Node), tail(new Node) {
+	// define iterator
+	class const_iterator {
+		class friend List<Object>;
+	protected:
+		Object* ptr;
+		const_iterator(const Object*p):ptr(p){}
+	public:
+		const Object& operator*()const {
+			return *ptr;
+		}
+
+	};
+	class iterator :public const_iterator {
+
+	};
+	//constructor
+	List() :head(new Node), tail(new Node),thesize(0) {
 		head->next = tail;
 		tail->pre = next;
 	}
-	List(const List& other) :head(new Node), tail(new Node) {
+	List(const List& other) :head(new Node), tail(new Node), thesize(0) {
 		for (Node* p = other.head->next; p != other.tail; p = p->next) {
 			push_back(*p);
+			++thesize;
 		}
 	}
-	List(List&& other) :head(other.head), tail(other.tail) {
+	List(List&& other) :head(other.head), tail(other.tail), thesize(other.thesize) {
 		other.head = nullptr;
 		other.tail = nullptr;
 	}
@@ -38,14 +56,65 @@ public:
 		swap(other);
 		return *this;
 	}
+	//desreuctor
 	~List()
 	{
 		makeEmpty();
 		delete head;
 		delete tail;
 	}
+	//element access
+	Object& front() {
+		return head->next->obj;
+	}
+	Object& back() {
+		return tail->pre->obj;
+	}
+	//iterators
+	iterator begin() {
+		return head->next;
+	}
+	iterator end() {
+		return tail;
+	}
+	//capacity
+	bool empty()const noexcept {
+		return thesize == 0;
+	}
+	size_t size()const noexcept {
+		return thesize;
+	}
+	//modifiers
+	void  clear() {
+		makeEmpty();
+	}
+	iterator insert(const_iterator pos,const Object& value) {
 
-	void push_back()
+	}
+	iterator erase(const_iterator pos) {
+
+	}
+	void push_back(const Object&value) {
+
+	}
+	void pop_back() {
+
+	}
+	void push_front(const Object& value) {
+
+	}
+	void pop_front() {
+
+	}
+	void resize(size_t count, const Object& value) {
+
+	}
+	void swap(List& other) {
+
+	}
+	//operations
+
+
 private:
 	void makeEmpty() {
 		for (Node* p = head->next; p != tail;) {
