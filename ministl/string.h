@@ -198,24 +198,27 @@ public:
 		return thecapacity;
 	}
 	size_t reserve(size_t newcap) {
-		newcap = get_next_cap(newcap);
-		realloc_n(newcap);
+		realloc_n(get_next_cap(newcap););
 	}
 	//operations
 	void clear()noexcept {
+		*p = '\0';
 		thesize = 0;
 	}
 	String& insert(size_t index, size_t count, char ch) {
+		realloc_n_auto(count+thesize);
 		char* s = new char[count];
 		memset(s, ch, count);
 		inserthelper(index, s, count);
 		return *this;
 	}
 	String& insert(size_t index, const char* s) {
+		realloc_n_auto(strlen(s)+thesize);
 		inserthelper(index, s, strlen(s));
 		return *this;
 	}
 	String& insert(size_t index, const String& str) {
+		realloc_n_auto(str.size() + thesize);
 		inserthelper(index, str.p, str.size());
 		return *this;
 	}
@@ -267,7 +270,8 @@ public:
 	}
 	
 	String& replace(size_t pos, size_t count, const String& str) {
-		replacehelper(pos, str.p, str.size(), count);
+		realloc_n_auto(str.size() + thesize - count);
+		replacehelper(pos, count, str.p, str.size());
 		return *this;
 	}
 	String substr(size_t pos = 0, size_t count = npos)const {
@@ -286,40 +290,44 @@ private:
 	static constexpr size_t initialcap = 15;
 	char* p;
 	size_t thesize, thecapacity;
+	void realloc_n_auto(size_t need) {
+		if (need > thecapacity)
+			realloc_n(get_next_cap(need));
+	}
 	void realloc_n(size_t newcap) {
 		char* newp = new char[newcap+1];
-		memcpy(newp, p, thesize);
+		//add '\0'
+		memcpy(newp, p, thesize+1);
 		delete[]p;
 		p = newp;
 		thecapacity = newcap;
 	}
 	size_t get_next_cap(size_t k) {
-		size_t newcap = initialcap;
-		while (newcap < k) {
-			newcap *= 2;
+		while (thecapacity < k) {
+			thecapacity *= 2;
 		}
-		return newcap;
+		return thecapacity;
 	}
 	void inserthelper(size_t index, const char* s, size_t sz) {
-		int newcap = get_next_cap(thesize + sz);
-		char* newp = new char[newcap + 1];
-		memcpy(newp, p, index);
-		memcpy(newp + index, s, sz);
-		memcpy(newp + index + sz, p + index, thesize - index);
-		p[thesize + sz] = '\0';
-		thesize += sz;
-		thecapacity = newcap;
+		for (size_t i = thesize; i >= index; --i) {
+			p[i + sz] = p[i];
+		}
+		memcpy(p + index, s, sz);
 	}
-	void replacehelper(size_t index, const char* s, size_t sz, size_t count) {
-		size_t newsize = thesize + sz - count;
-		int newcap = get_next_cap(newsize);
-		char* newp = new char[newcap + 1];
-		memcpy(newp, p, index);
-		memcpy(newp + index, s, sz);
-		memcpy(newp + index + sz, p + index+count, thesize - index-count);
-		p[newsize] = '\0';
-		thesize = newsize;
-		thecapacity = newcap;
+	void replacehelper(size_t index, size_t count, const char* s, size_t sz) {
+		if (sz < count) {
+			int offset = sz - count;
+			for (size_t i = index + count; i < thesize; ++i) {
+				p[i + offset] = p[i];
+			}
+		}
+		else {
+			int offset = sz - count;
+			for (size_t i = thesize; i >=index; --i) {
+				p[i + offset] = p[i];
+			}
+		}
+		memcpy(p + index, s, sz);
 	}
 	
 };

@@ -1,7 +1,7 @@
 #pragma once
 #ifndef LIST_H
 #define LIST_H
-
+#include<utility>
 template<class Object>
 class List{
 private:
@@ -27,10 +27,60 @@ public:
 		const Object& operator*()const {
 			return *ptr;
 		}
+		const_iterator& operator++() {
+			ptr = ptr->next;
+			return *this;
+		}
+		const_iterator operator++(int) {
+			const_iterator old(ptr);
+			++(*this);
+			return old;
+		}
+		const_iterator& operator--() {
+			ptr = ptr->pre;
+			return *this;
+		}
+		const_iterator operator--(int) {
+			const_iterator old(ptr);
+			--(*this);
+			return old;
+		}
+		bool operator==(const const_iterator& rhs)const {
+			return ptr == rhs.ptr;
+		}
+		bool operator!=(const const_iterator& rhs)const {
+			return !(*this == rhs);
+		}
 
 	};
 	class iterator :public const_iterator {
-
+	private:
+		iterator(const Object*p):const_iterator(p){}
+	public:
+		Object& operator*() {
+			return *this->ptr;
+		}
+		const Object& operator*()const {
+			return *this->ptr;
+		}
+		iterator& operator++() {
+			this->ptr = this->ptr->next;
+			return *this;
+		}
+		iterator operator++(int) {
+			iterator old(this->ptr);
+			++(*this);
+			return old;
+		}
+		iterator& operator--() {
+			this->ptr = this->ptr->pre;
+			return *this;
+		}
+		iterator operator--(int) {
+			iterator old(this->ptr);
+			--(*this);
+			return old;
+		}
 	};
 	//constructor
 	List() :head(new Node), tail(new Node),thesize(0) {
@@ -89,31 +139,57 @@ public:
 		makeEmpty();
 	}
 	iterator insert(const_iterator pos,const Object& value) {
-
+		Node* tmp = new Node{ value };
+		pos.ptr->pre->next = tmp;
+		pos.ptr->next->ptr = tmp;
+		tmp->pre = pos.ptr->pre;
+		tmp->next = pos.ptr->next;
+		++thesize;
+		return tmp;
 	}
 	iterator erase(const_iterator pos) {
-
+		iterator tmp = pos.ptr->next;
+		pos.ptr->pre->next = pos.ptr->next;
+		pos.ptr->next->pre = pos.ptr->pre;
+		delete pos.ptr;
+		--thesize;
+		return tmp;
+	}
+	iterator erase(const_iterator start, const_iterator end) {
+		for (iterator it = start; it != end; ++it)
+			erase(it);
+		return end.ptr;
 	}
 	void push_back(const Object&value) {
-
+		insert(tail, value);
 	}
 	void pop_back() {
-
+		erase(tail->pre);
 	}
 	void push_front(const Object& value) {
-
+		insert(head->next,value);
 	}
 	void pop_front() {
-
+		erase(head->next);
 	}
 	void resize(size_t count, const Object& value) {
-
+		if (count > thesize) {
+			for (int i = count - thesize; i > 0; --i) {
+				insert(tail, value);
+			}
+		}
+		else if (count < resize) {
+			for (int i = 0; i < resize - count; ++i) {
+				erase(tail->pre);
+			}
+		}
 	}
 	void swap(List& other) {
-
+		std::swap(head, other.head);
+		std::swap(tail, other.tail);
+		std::swap(thesize, other.thesize);
 	}
 	//operations
-
 
 private:
 	void makeEmpty() {
