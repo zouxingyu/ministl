@@ -64,21 +64,21 @@ public:
 		const char& operator*()const {
 			return *ptr;
 		}
-		const_iterator& operator++() {
+		iterator& operator++() {
 			++ptr;
 			return *this;
 		}
-		const_iterator operator++(int) {
-			const_iterator old(ptr);
+		iterator operator++(int) {
+			iterator old(ptr);
 			++(*this);
 			return old;
 		}
-		const_iterator& operator--() {
+		iterator& operator--() {
 			--ptr;
 			return *this;
 		}
-		const_iterator operator--(int) {
-			const_iterator old(ptr);
+		iterator operator--(int) {
+			iterator old(ptr);
 			--(*this);
 			return old;
 		}
@@ -86,25 +86,25 @@ public:
 		iterator(char* p) :const_iterator(p) {}
 	};
 	//constructor
-	explicit String() :p(new char[initialcap + 1]), thesize(0), thecapacity(initialcap) {
+	explicit String() :p(new char[initialcap+1]), thesize(0), thecapacity(initialcap) {
 		*p = '\0';
 	}
-	String(size_t count, char ch) :p(new char[get_next_cap(count) + 1]), thesize(count), thecapacity(get_next_cap(count)) {
+	String(size_t count, char ch) :p(new char[count+1]), thesize(count), thecapacity(count) {
 		memset(p, ch, count);
 		p[count] = '\0';
 	}
-	String(const char* s) :p(new char[get_next_cap(strlen(s)) + 1]), thesize(strlen(s)), thecapacity(get_next_cap(strlen(s))) {
+	String(const char* s) :p(new char[strlen(s) + 1]), thesize(strlen(s)), thecapacity(strlen(s)) {
 		strcpy(p, s);
 	}
-	String(const String& other, size_t pos, size_t count):p(new char[get_next_cap(count) + 1]), thesize(count), thecapacity(get_next_cap(count)) {
+	String(const String& other, size_t pos, size_t count):p(new char[count + 1]), thesize(count), thecapacity(count) {
 		memcpy(p, other.p + pos, count);
 		p[count] = '\0';
 	}
-	String(const char* s, size_t count) :p(new char[get_next_cap(count) + 1]), thesize(count), thecapacity(get_next_cap(count)) {
+	String(const char* s, size_t count) :p(new char[count + 1]), thesize(count), thecapacity(count) {
 		memcpy(p, s, count);
 		p[count] = '\0';
 	}
-	String(const String& other) :p(new char[other.thecapacity + 1]), thesize(other.size()), thecapacity(other.thecapacity) {
+	String(const String& other) :p(new char[other.thesize + 1]), thesize(other.thesize), thecapacity(other.thesize) {
 		strcpy(p, other.p);
 	}
 	String(String&& other) :p(other.p), thesize(other.thesize), thecapacity(other.thecapacity) {
@@ -112,7 +112,7 @@ public:
 		thesize = thecapacity = 0;
 	}
 	template<class Input>
-	String(Input first, Input last):p(new char[(last-first)+1]),thesize(last-first+1),thecapacity(get_next_cap(last - first + 1)) {
+	String(Input first, Input last):p(new char[(last-first)+1]),thesize(last-first),thecapacity(last - first) {
 		size_t pos = 0;
 		for (Input it = first; it != last; ++it) {
 			p[pos++] = *it;
@@ -182,7 +182,7 @@ public:
 	}
 	//capacity
 	bool empty()const noexcept {
-		return thesize == thecapacity;
+		return thesize == 0;
 	}
 	size_t size()const noexcept {
 		return thesize;
@@ -198,7 +198,7 @@ public:
 		return thecapacity;
 	}
 	size_t reserve(size_t newcap) {
-		realloc_n(get_next_cap(newcap););
+		realloc_n(newcap);
 	}
 	//operations
 	void clear()noexcept {
@@ -239,9 +239,6 @@ public:
 	}
 	String& append(const char* s) {
 		return insert(thesize, s);
-	}
-	String& append(const char* s, size_t count) {
-		return insert(thesize, s, count);
 	}
 	String& operator+=(const String& str) {
 		return append(str);
@@ -309,25 +306,27 @@ private:
 		return thecapacity;
 	}
 	void inserthelper(size_t index, const char* s, size_t sz) {
-		for (size_t i = thesize; i >= index; --i) {
+		for (int i = thesize; i >= (int)index; --i) {
 			p[i + sz] = p[i];
 		}
 		memcpy(p + index, s, sz);
+		thesize += sz;
 	}
 	void replacehelper(size_t index, size_t count, const char* s, size_t sz) {
 		if (sz < count) {
 			int offset = sz - count;
-			for (size_t i = index + count; i < thesize; ++i) {
+			for (size_t i = index + count; i <=thesize; ++i) {
 				p[i + offset] = p[i];
 			}
 		}
 		else {
 			int offset = sz - count;
-			for (size_t i = thesize; i >=index; --i) {
+			for (int i = thesize; i >=(int)index; --i) {
 				p[i + offset] = p[i];
 			}
 		}
 		memcpy(p + index, s, sz);
+		thesize += (sz > count) ? (sz - count) : (count - sz);
 	}
 	
 };

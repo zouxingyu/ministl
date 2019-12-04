@@ -65,9 +65,6 @@ public:
 		Comparable& operator*() {
 			return this->ptr->element;
 		}
-		const Comparable& operator*() {
-			return this->ptr->element;
-		}
 		iterator& operator++() {
 			Node* t;
 			if (this->ptr->right) {
@@ -97,6 +94,7 @@ public:
 	}
 	Set(Set&& other) :root(other.root) {
 		other.root = nullptr;
+		thesize = 0;
 	}
 	Set& operator=(const Set& other) {
 		Set copy(other);
@@ -109,11 +107,12 @@ public:
 	}
 	~Set()
 	{
-		makeEmpty();
+		makeEmpty(root);
 	}
 
 	iterator begin() {
-		Node* t;
+		Node* t=root;
+		if (t == nullptr)return t;
 		while (t->left != nullptr) {
 			t = t->left;
 		}
@@ -157,7 +156,7 @@ public:
 	}
 	
 private:
-	iterator inserthelper(Node* t,Node*p,const Comparable& value) {
+	iterator inserthelper(Node* &t,Node*p,const Comparable& value) {
 		if (t == nullptr) {
 			t = new Node{value,nullptr,nullptr,p};
 		}

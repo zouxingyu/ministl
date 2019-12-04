@@ -19,13 +19,13 @@ private:
 public:
 	// define iterator
 	class const_iterator {
-		class friend List<Object>;
+		friend class List<Object>;
 	protected:
-		Object* ptr;
-		const_iterator(const Object*p):ptr(p){}
+		Node* ptr;
+		const_iterator(Node *p):ptr(p){}
 	public:
 		const Object& operator*()const {
-			return *ptr;
+			return ptr->obj;
 		}
 		const_iterator& operator++() {
 			ptr = ptr->next;
@@ -54,14 +54,12 @@ public:
 
 	};
 	class iterator :public const_iterator {
+		friend class List<Object>;
 	private:
-		iterator(const Object*p):const_iterator(p){}
+		iterator(Node *p):const_iterator(p){}
 	public:
 		Object& operator*() {
-			return *this->ptr;
-		}
-		const Object& operator*()const {
-			return *this->ptr;
+			return this->ptr->obj;
 		}
 		iterator& operator++() {
 			this->ptr = this->ptr->next;
@@ -85,7 +83,7 @@ public:
 	//constructor
 	List() :head(new Node), tail(new Node),thesize(0) {
 		head->next = tail;
-		tail->pre = next;
+		tail->pre = head;
 	}
 	List(const List& other) :head(new Node), tail(new Node), thesize(0) {
 		for (Node* p = other.head->next; p != other.tail; p = p->next) {
@@ -96,9 +94,10 @@ public:
 	List(List&& other) :head(other.head), tail(other.tail), thesize(other.thesize) {
 		other.head = nullptr;
 		other.tail = nullptr;
+		thesize = 0;
 	}
 	List& operator=(const List& other) {
-		Listcopy(other);
+		List copy(other);
 		swap(copy);
 		return *this;
 	}
@@ -140,10 +139,10 @@ public:
 	}
 	iterator insert(const_iterator pos,const Object& value) {
 		Node* tmp = new Node{ value };
-		pos.ptr->pre->next = tmp;
-		pos.ptr->next->ptr = tmp;
 		tmp->pre = pos.ptr->pre;
-		tmp->next = pos.ptr->next;
+		pos.ptr->pre->next = tmp;
+		pos.ptr->pre = tmp;
+		tmp->next = pos.ptr;
 		++thesize;
 		return tmp;
 	}
