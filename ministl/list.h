@@ -2,8 +2,14 @@
 #ifndef LIST_H
 #define LIST_H
 #include<utility>
+template<class Object>class List;
+template<class Object>
+void swap(List<Object>& lhs, List<Object>& rhs) {
+	lhs.swap(rhs);
+}
 template<class Object>
 class List{
+	friend void swap<>(List&, List&);
 private:
 	struct Node
 	{

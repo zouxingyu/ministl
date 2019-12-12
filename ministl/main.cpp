@@ -1,9 +1,10 @@
 #include<iostream>
-#include"stack.h"
+
 #include"vector.h"
-using namespace std;
+#include"stack.h"
+
 int main() {
-	Stack<int,Vector<int>>s1,s2;
-	swap(s1, s2);
+	zxy::Stack<int, Vector<int>>s1, s2;
+	s1.swap(s2);
 
 }
