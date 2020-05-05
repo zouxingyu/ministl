@@ -15,16 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="vector.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="list.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="string.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="set.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="vector.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="list.h">
+    <ClInclude Include="priority_queue.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="queue.h">
@@ -33,13 +36,13 @@
     <ClInclude Include="stack.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="priority_queue.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".clang-format" />
   </ItemGroup>
 </Project>
