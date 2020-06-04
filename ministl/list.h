@@ -8,18 +8,18 @@ template <class T>
 class list {
    private:
     struct Node {
-        T data_;
-        Node *next_;
-        Node *pre_;
-        Node(const T &data, Node *next = nullptr, Node *pre = nullptr) : data_(data), next_(next), pre_(pre) {}
-        Node(T &&data, Node *next = nullptr, Node *pre = nullptr) : data_(std::move(data)), next_(next), pre_(pre) {}
+        T data;
+        Node *next;
+        Node *pre;
+        Node(const T &data, Node *next = nullptr, Node *pre = nullptr) : data(data), next(next), pre(pre) {}
+        Node(T &&data, Node *next = nullptr, Node *pre = nullptr) : data(std::move(data)), next(next), pre(pre) {}
     };
     Node *head_;
     Node *tail_;
     size_t size_;
-    std::allocator<T> alloc;
+    std::allocator<Node> alloc;
     void delete_all_node() {
-        while (head_->next_ != tail_) {
+        while (head_->next != tail_) {
             Node *tmp = head_->next;
             head_->next = tmp->next;
             tmp->next->pre = head_;
@@ -96,8 +96,8 @@ class list {
         friend class list<T>;
 
        protected:
-        T *p_;
-        ConstIterator(T *p) : p_(p) {}
+        Node *p_;
+        ConstIterator(Node *p) : p_(p) {}
 
        public:
         ConstIterator &operator++() {
@@ -136,7 +136,7 @@ class list {
         friend class list<T>;
 
        private:
-        Iterator(T *p) : ConstIterator(p) {}
+        Iterator(Node *p) : ConstIterator(p) {}
 
        public:
         Iterator &operator++() {
@@ -272,22 +272,22 @@ typename list<T>::const_reference list<T>::back() const {
 
 template <class T>
 typename list<T>::iterator list<T>::begin() noexcept {
-    return head_->next_;
+    return head_->next;
 }
 
 template <class T>
 typename list<T>::const_iterator list<T>::begin() const noexcept {
-    return head_->next_;
+    return head_->next;
 }
 
 template <class T>
 typename list<T>::iterator list<T>::end() noexcept {
-    return tail_->pre_;
+    return tail_;
 }
 
 template <class T>
 typename list<T>::const_iterator list<T>::end() const noexcept {
-    return tail_->pre_;
+    return tail_;
 }
 
 template <class T>
@@ -312,7 +312,7 @@ typename list<T>::iterator list<T>::insert(const_iterator pos, const T &value) {
 
 template <class T>
 typename list<T>::iterator list<T>::insert(const_iterator pos, size_type count, const T &value) {
-    T *ptr = pos.p_;
+    Node *ptr = pos.p_;
     size_ += count;
     while (count--) {
         Node *tmp = alloc.allocate(1);
@@ -326,7 +326,7 @@ typename list<T>::iterator list<T>::insert(const_iterator pos, size_type count, 
 
 template <class T>
 typename list<T>::iterator list<T>::insert(const_iterator pos, T &&value) {
-    T *ptr = pos.p_;
+    Node *ptr = pos.p_;
     size_++;
     Node *tmp = alloc.allocate(1);
     alloc.construct(tmp, std::move(value), ptr, ptr->pre);
@@ -353,7 +353,7 @@ typename list<T>::iterator list<T>::erase(const_iterator pos) {
 template <class T>
 typename list<T>::iterator list<T>::erase(const_iterator first, const_iterator last) {
     while (first != last) {
-        T *tmp = first.p_;
+        Node *tmp = first.p_;
         ++first;
         tmp->pre->next = tmp->next;
         tmp->next->pre = tmp->pre;
@@ -365,12 +365,18 @@ typename list<T>::iterator list<T>::erase(const_iterator first, const_iterator l
 }
 template <class T>
 void list<T>::push_back(const T &value) {
-    insert(end(), value);
+    Node *tmp = alloc.allocate(1);
+    alloc.construct(tmp, value, tail_, tail_->pre);
+    tail_->pre->next = tmp;
+    tail_->pre = tmp;
+    size_++;
 }
 
 template <class T>
 void list<T>::push_back(T &&value) {
-    insert(end(), std::move(value));
+    Node *tmp = alloc.allocate(1);
+    alloc.construct(tmp, std::move(value), tail_, tail_->pre);
+    size_++;
 }
 
 template <class T>
@@ -433,8 +439,8 @@ void list<T>::swap(list &other) {
 template <class T>
 void list<T>::merge(list &other) {
     if (other.head_ != head_) {
-        Node p1 = head_->next, p2 = other.head_->next;
-        Node p = head_;
+        Node *p1 = head_->next, *p2 = other.head_->next;
+        Node *p = head_;
         while (p1 != tail_ && p2 != other.tail_) {
             if (p1->data <= p2->data) {
                 p->next = p1;
@@ -448,24 +454,25 @@ void list<T>::merge(list &other) {
                 p2 = p2->next;
             }
         }
-        while (p1 != tail_) {
+        if (p1 != tail_) {
             p->next = p1;
             p1->pre = p;
+            size_ += other.size_;
             other.head_->next = other.tail_;
             other.tail_->pre = other.head_;
             other.size_ = 0;
         }
-        while (p2 != other.tail_) {
+        if (p2 != other.tail_) {
             p->next = p2;
             p2->pre = p;
-            Node *last = other.tail_->pre;
-            last->next = tail_;
-            tail_->pre = last;
+            other.tail_->pre->next = tail_;
+            tail_->pre = other.tail_->pre;
+            size_ += other.size_;
             other.head_->next = other.tail_;
             other.tail_->pre = other.head_;
             other.size_ = 0;
         }
-        size_ += other.size_;
+        
     }
 }
 
@@ -476,8 +483,8 @@ void list<T>::splice(const_iterator pos, list &other) {
 
 template <class T>
 void list<T>::splice(const_iterator pos, list &other, const_iterator first, const_iterator last) {
-    T *p = pos.p_;
-    T *h=first.p_->pre,*t=last.p_;
+    Node *p = pos.p_;
+    Node *h=first.p_->pre,*t=last.p_;
     if (first != last) {
         p->pre->next = h->next;
         h->next->pre = p->pre;

@@ -113,7 +113,7 @@ class string {
     string(const string& other) : p(new char[other.thesize + 1]), thesize(other.thesize), thecapacity(other.thesize) {
         strcpy(p, other.p);
     }
-    string(string&& other) : p(other.p), thesize(other.thesize), thecapacity(other.thecapacity) {
+    string(string&& other)noexcept : p(other.p), thesize(other.thesize), thecapacity(other.thecapacity) {
         other.p = nullptr;
         thesize = thecapacity = 0;
     }
